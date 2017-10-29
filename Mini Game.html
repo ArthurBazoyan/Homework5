@@ -1,0 +1,191 @@
+<canvas id = "canvas" width = "850" height = "850" style = "border:1px solid #000000;">
+</canvas>
+
+<script> 
+   
+  const rand = function(num) {
+  return Math.floor(Math.random() * num) + 1;
+};
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext('2d');
+  const colorArray = [ 'lightslategray', 'slategray' , 'black','darkslategray'];
+  
+  const gameData = {};
+  gameData.hero = {
+    x: 20,
+    y: 20,
+    r: 20,
+    speed: 5,
+    color : 'red'
+  };
+  gameData.isKilled = false;
+
+  const canvasWidth = canvas.width;
+  const canvasHeight= canvas.height;
+
+  const RectsIntersection = function(rect1X, rect1Y, rect1W, rect1H, rect2X, rect2Y, rect2W, rect2H) {
+    return rect1X < rect2X + rect2W && rect1X + rect1W > rect2X && rect1Y < rect2Y + rect2H && rect1H + rect1Y > rect2Y;
+  };
+  const RectCircleIntersection = function(rectX, rectY, rectW, rectH, circleX, circleY, circleR) {
+  const deltaX = circleX - Math.max(rectX, Math.min(circleX, rectX + rectW));
+  const deltaY = circleY - Math.max(rectY, Math.min(circleY, rectY + rectH));
+  return (deltaX * deltaX + deltaY * deltaY) < (circleR * circleR);
+  };
+
+  const forEach = function ( badguys , f ) {
+  const loop1 = function ( index ) {
+    if(index === badguys.length){
+      return "";
+    }
+    f(badguys[index]);
+    loop1(index+1);
+  }
+  loop1(0);
+};
+
+  gameData.badguys = [{
+        x: rand(canvas.width - 30),
+        y: rand(canvas.height - 30),
+        width: 30,
+        height: 30,
+        xDelta: 1,
+        yDelta: 1,
+        color: colorArray[rand(4)-1]}
+  ]
+  const add = function() {
+    const x = rand(canvas.width - 30);
+    const y = rand(canvas.height - 30);
+    const localForEach = function(arr) {
+        const helper = function(i) {
+            if (i === arr.length) {
+              return;
+            }
+            if (RectsIntersection(arr[i].x, arr[i].y, 60, 60, x, y, 60, 60)) {
+              return false;
+            } else {
+              return true;
+            }
+            helper(i + 1);
+          }
+          return helper(0);
+    }
+    if (localForEach(gameData.badguys) && !RectCircleIntersection(x, y, 60, 60, gameData.hero.x, gameData.hero.y, gameData.hero.r + 160)) {
+      gameData.badguys.push ({
+        x: x,
+        y: y,
+        width: 30,
+        height: 30,
+        xDelta: 1,
+        yDelta: 1,
+        color: colorArray[rand(4)-1]
+      });
+    return;
+    } else {
+      add();
+    }
+  }
+  setInterval(add, 2500);
+
+const draw = function () {
+  ctx.fillStyle = 'rgba(255,255,255, 0.3)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  forEach(gameData.badguys, function(badguy){
+    ctx.fillStyle = badguy.color;
+    ctx.fillRect(badguy.x, badguy.y, badguy.width, badguy.height);
+  });
+  ctx.beginPath();
+    ctx.arc(gameData.hero.x, gameData.hero.y, gameData.hero.r, 0, 2 * Math.PI, false);
+    ctx.fillStyle = 'red';
+    ctx.fill();
+};
+
+
+const update = function() {
+  forEach(gameData.badguys, function(badGuy) {
+      if(badGuy.x+badGuy.width>=canvas.width || badGuy.x <= 0) {
+        badGuy.xDelta = -1 * badGuy.xDelta;
+      }
+      if(badGuy.y+badGuy.height>=canvas.height || badGuy.y <= 0) {
+        badGuy.yDelta = -1 * badGuy.yDelta;
+      }
+      forEach(gameData.badguys, function(badGuy2) {
+    if(RectCircleIntersection(badGuy.x, badGuy.y, badGuy.width, badGuy.height, gameData.hero.x, gameData.hero.y, gameData.hero.r)) {
+      gameData.isKilled = true;
+    }
+        if(!(badGuy===badGuy2)){
+          if(RectsIntersection(badGuy.x, badGuy.y, badGuy.width, badGuy.height, badGuy2.x, badGuy2.y, badGuy2.width, badGuy2.height)){
+            if(badGuy.yDelta * badGuy2.yDelta < 0) {
+              badGuy.yDelta = -1*badGuy.yDelta;
+              badGuy2.yDelta = -1*badGuy2.yDelta;
+            }
+            if(badGuy.xDelta * badGuy2.xDelta < 0) {
+              badGuy.xDelta = -1*badGuy.xDelta;
+              badGuy2.xDelta = -1*badGuy2.xDelta;
+            }
+          }
+        }
+      })
+      badGuy.x +=badGuy.xDelta;
+      badGuy.y +=badGuy.yDelta;
+  })
+ };
+
+ const leftKey = 37;
+  const upKey = 38;
+  const rightKey = 39;
+  const downKey = 40;
+  const keyPressed = {}
+
+  document.addEventListener('keydown', function(event) {
+    keyPressed[event.keyCode] = true;
+    event.preventDefault()
+  }, false);
+  document.addEventListener('keyup', function(event) {
+    keyPressed[event.keyCode] = false;
+    event.preventDefault()
+  }, false);
+
+const loop = function () {
+  if(keyPressed[upKey] && gameData.hero.y > gameData.hero.r) {
+      gameData.hero.y -= gameData.hero.speed;
+    }
+    if(keyPressed[downKey] && gameData.hero.y < canvas.height - gameData.hero.r) {
+      gameData.hero.y += gameData.hero.speed;
+    }
+    if(keyPressed[rightKey] && gameData.hero.x < canvas.width - gameData.hero.r) {
+      gameData.hero.x += gameData.hero.speed;
+    }
+    if(keyPressed[leftKey] && gameData.hero.x > gameData.hero.r) {
+      gameData.hero.x -= gameData.hero.speed;
+    }
+  update();
+  draw ();
+  
+  if(!gameData.isKilled){
+      window.requestAnimationFrame(loop);
+    } else {
+    alert('Game over');
+        gameData.hero = {
+          x: 20,
+          y: 20,
+          r: 20,
+          speed: 5
+        };
+        gameData.bonus = {
+          x: rand(canvas.width - 30),
+          y: rand(canvas.height - 30),
+          r: 10
+        };
+        gameData.isKilled = false;
+        keyPressed[upKey] = false;
+        keyPressed[downKey] = false;
+        keyPressed[rightKey] = false;
+        keyPressed[leftKey] = false;
+        gameData.badguys = add();
+        window.requestAnimationFrame(loop);
+  }
+};
+
+loop(); 
+
+</script>

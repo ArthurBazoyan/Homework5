@@ -1,0 +1,96 @@
+<canvas id = "canvas" width = "500" height = "500" style = "border:1px solid #000000;">
+</canvas>
+
+<script> 
+	 
+	const canvas = document.getElementById("canvas");
+	const ctx = canvas.getContext('2d');
+	const colorArray = [ 'red', 'blue' , 'green', 'yellow', 'purple', 'black', 'orange'];
+	const badguys = [];
+
+
+
+	const rand = function(num) {
+	return Math.floor(Math.random() * num) + 1;
+};
+	
+	const canvasWidth = canvas.width;
+	const canvasHeight= canvas.height;
+
+	const createPoints = function (count, canvasWidth, canvasHeight)
+	{
+		const f = function (i)
+		{
+			if (i === count){
+				return '';
+			}  
+			const bad = {
+            	x 	  : rand(canvasWidth - 30),
+            	y 	  : rand(canvasHeight - 30),
+            	width : 30,
+            	height: 30,
+            	xDelta: 1,
+            	yDelta: 1,
+            	color : colorArray[rand(7)-1] 
+            }
+		 badguys[i] = bad;
+		 f(i+1)
+		};
+		f(0);
+		return badguys;
+	};
+	console.log(createPoints (6, canvasWidth, canvasHeight));
+
+	//1 PART DONE BOOYAAAH!!!
+const forEach = function ( badguys , f ) {
+	const loop1 = function ( index ) {
+		if(index === badguys.length){
+			return "";
+		}
+		f(badguys[index]);
+		loop1(index+1);
+	}
+	loop1(0);
+}
+
+
+const draw = function () {
+	ctx.fillStyle = 'rgba(255,255,255, 0.3)';
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+	forEach(badguys, function(badguy){
+		ctx.fillStyle = badguy.color;
+		ctx.fillRect(badguy.x, badguy.y, badguy.width, badguy.height);
+	});
+};
+
+
+const update = function () {
+	forEach(badguys, function(badguy) {
+		if ( badguy.x > canvasWidth - badguy.width || badguy.x < 0) {
+			badguy.xDelta = -badguy.xDelta;
+			
+		}
+		badguy.x = badguy.x + badguy.xDelta;
+	});
+
+	forEach(badguys, function(badguy) {
+		if ( badguy.y > canvasHeight - badguy.height || badguy.y < 0) {
+			badguy.yDelta = -badguy.yDelta;
+			
+		}
+		badguy.y = badguy.y + badguy.yDelta;
+	});
+	
+};
+
+
+
+
+const loop = function () {
+	draw ();
+	update();
+	requestAnimationFrame(loop);
+};
+
+loop();	
+</script>
